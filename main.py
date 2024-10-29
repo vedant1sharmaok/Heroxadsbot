@@ -8,7 +8,7 @@ from flask import Flask, jsonify, request
 API_ID = '23957241'
 API_HASH = 'c806d41322a1d13b32e910b39c138fc8'
 STRING_SESSION = '1BVtsOJgBu46oxM2FjD64dZxr3zQWbloyopB-jRND5tOhzr21Ov1ghZgEw1JVfdwEapswKVC0m7dfj9YcC2R2CUK6zaV-STGdmA_cdQ6aHVzZf530n94xhcD6lE5xCFmtxyrdNQoD-4i71rMHW1alJiLEJQMujlku4CBb-7Lhu0QFugT9h_9K1DAglQWjBjMKw1_BM6KizWkJMprmC8LPZxxFycPzM1p1xIrve_EUJVclIWEal-RRoEVQhTMpmnfzZGBS7_Dynv7qMNIQpC36ZiFIid0z_oce9pesuR3zlCaiaeKLZhQN6-REg_Dj6gqlE2JuRjQWcMJJhmQvx8YvkebV43ZoaXo='
-CHANNEL_USERNAME = 'YOUR_CHANNEL_USERNAME'  # Channel from which to forward messages
+CHANNEL_USERNAME = '@privateherox'  # Channel from which to forward messages
 
 app = Flask(__name__)
 
