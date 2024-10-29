@@ -16,7 +16,7 @@ client = TelegramClient('session_name', API_ID, API_HASH).start(session=STRING_S
 
 # Global variable to control forwarding status and interval
 forwarding = False
-interval = 60  # Default interval in seconds
+interval = 1200  # Default interval in seconds
 
 async def get_joined_groups():
     """Fetch all groups the bot is a member of."""
