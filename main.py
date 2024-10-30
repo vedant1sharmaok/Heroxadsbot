@@ -127,7 +127,7 @@ def main():
     global accounts
     accounts = load_accounts()  # Load existing accounts at startup
 
-    updater = Updater("YOUR_BOT_TOKEN")
+    updater = Updater("8153725483:AAHZorPFnW4iUojWIFBPKDnNNagIz5mGAnU")
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
