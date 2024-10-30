@@ -1,5 +1,4 @@
 import logging
-from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telethon import TelegramClient, errors
 from telethon.tl.types import PeerChannel
