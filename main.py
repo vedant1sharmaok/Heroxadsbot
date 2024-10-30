@@ -1,68 +1,144 @@
-import asyncio
+from flask import Flask
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
 from telethon import TelegramClient
-from telethon.tl.functions.channels import GetParticipantRequest
-from telethon.tl.types import ChannelParticipantsSearch
-from flask import Flask, jsonify, request
-
-# Replace these with your own values
-API_ID = '23957241'
-API_HASH = 'c806d41322a1d13b32e910b39c138fc8'
-STRING_SESSION = '1BVtsOJgBu46oxM2FjD64dZxr3zQWbloyopB-jRND5tOhzr21Ov1ghZgEw1JVfdwEapswKVC0m7dfj9YcC2R2CUK6zaV-STGdmA_cdQ6aHVzZf530n94xhcD6lE5xCFmtxyrdNQoD-4i71rMHW1alJiLEJQMujlku4CBb-7Lhu0QFugT9h_9K1DAglQWjBjMKw1_BM6KizWkJMprmC8LPZxxFycPzM1p1xIrve_EUJVclIWEal-RRoEVQhTMpmnfzZGBS7_Dynv7qMNIQpC36ZiFIid0z_oce9pesuR3zlCaiaeKLZhQN6-REg_Dj6gqlE2JuRjQWcMJJhmQvx8YvkebV43ZoaXo='
-CHANNEL_USERNAME = '@privateherox'  # Channel from which to forward messages
+import json
+import os
 
 app = Flask(__name__)
 
-client = TelegramClient('session_name', API_ID, API_HASH).start(session=STRING_SESSION)
+# Store accounts in a dictionary
+accounts = {}
+AUTHORIZED_USERS = set()  # Set of authorized user IDs
 
-# Global variable to control forwarding status and interval
-forwarding = False
-interval = 1200  # Default interval in seconds
+# Load accounts from a JSON file
+def load_accounts():
+    if os.path.exists('accounts.json'):
+        with open('accounts.json', 'r') as f:
+            return json.load(f)
+    return {}
 
-async def get_joined_groups():
-    """Fetch all groups the bot is a member of."""
-    groups = []
-    async for dialog in client.iter_dialogs():
-        if dialog.is_group:
-            groups.append(dialog.entity)
-    return groups
+# Save accounts to a JSON file
+def save_accounts():
+    with open('accounts.json', 'w') as f:
+        json.dump(accounts, f)
 
-async def forward_message():
-    global forwarding
-    async with client:
-        while forwarding:
-            async for message in client.iter_messages(CHANNEL_USERNAME, limit=1):
-                if forwarding:
-                    groups = await get_joined_groups()
-                    for group in groups:
-                        await client.send_message(group, message)  # Forward message to each group
-            await asyncio.sleep(interval)
+# Initialize Telethon clients for each account
+def init_client(api_id, api_hash, phone):
+    return TelegramClient(phone, api_id, api_hash)
 
-@app.route('/start', methods=['GET'])
-def start_forwarding():
-    global forwarding
-    if not forwarding:
-        forwarding = True
-        loop.create_task(forward_message())
-        return jsonify({"status": "Forwarding started"})
+# Command to start the bot
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("Welcome! Use /authorize to gain access.")
+
+# Command to authorize user
+def authorize(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    AUTHORIZED_USERS.add(user_id)
+    update.message.reply_text("You have been authorized! You can now use commands.")
+
+# Command to list accounts
+def list_accounts(update: Update, context: CallbackContext):
+    if not is_authorized(update):
+        return
+
+    if accounts:
+        account_list = "n".join(accounts.keys())
+        update.message.reply_text(f"Accounts:n{account_list}")
     else:
-        return jsonify({"status": "Already forwarding"})
+        update.message.reply_text("No accounts have been added yet.")
 
-@app.route('/stop', methods=['GET'])
-def stop_forwarding():
-    global forwarding
-    forwarding = False
-    return jsonify({"status": "Forwarding stopped"})
+# Command to add an account
+def add_account(update: Update, context: CallbackContext):
+    if not is_authorized(update):
+        return
 
-@app.route('/set_interval', methods=['POST'])
-def set_interval():
-    global interval
-    data = request.json
-    if 'interval' in data:
-        interval = data['interval'] * 60  # Convert minutes to seconds
-        return jsonify({"status": "Interval updated", "interval": interval // 60})
-    return jsonify({"status": "Invalid input"}), 400
+    if len(context.args) < 3:
+        update.message.reply_text("Usage: /add_account <api_id> <api_hash> <phone_number>")
+        return
 
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(client.start())
-    app.run(port=5000)
+    api_id = context.args[0]
+    api_hash = context.args[1]
+    phone_number = context.args[2]
+
+    # Initialize and store the client
+    try:
+        client = init_client(api_id, api_hash, phone_number)
+        accounts[phone_number] = {'api_id': api_id, 'api_hash': api_hash}
+        save_accounts()  # Save changes persistently
+        update.message.reply_text(f"Account {phone_number} added successfully!")
+    except Exception as e:
+        update.message.reply_text(f"Error adding account: {str(e)}")
+
+# Command to remove an account
+def remove_account(update: Update, context: CallbackContext):
+    if not is_authorized(update):
+        return
+
+    if len(context.args) < 1:
+        update.message.reply_text("Usage: /remove_account <phone_number>")
+        return
+
+    phone_number = context.args[0]
+    if phone_number in accounts:
+        del accounts[phone_number]
+        save_accounts()  # Save changes persistently
+        update.message.reply_text(f"Account {phone_number} removed successfully!")
+    else:
+        update.message.reply_text(f"No account found for {phone_number}.")
+
+# Command to forward messages
+def forward(update: Update, context: CallbackContext):
+    if not is_authorized(update):
+        return
+            if len(context.args) < 3:
+        update.message.reply_text("Usage: /forward <from_chat_id> <to_chat_id> <phone_number>")
+        return
+
+    from_chat_id = context.args[0]
+    to_chat_id = context.args[1]
+    phone_number = context.args[2]
+
+    if phone_number not in accounts:
+        update.message.reply_text(f"No account found for {phone_number}.")
+        return
+
+    client = init_client(accounts[phone_number]['api_id'], accounts[phone_number]['api_hash'], phone_number)
+
+    async def forward_message():
+        await client.start()
+        async for message in client.iter_messages(from_chat_id):
+            await client.send_message(to_chat_id, message.text)
+            update.message.reply_text(f"Forwarded message from {from_chat_id} to {to_chat_id}")
+
+    with client:
+        client.loop.run_until_complete(forward_message())
+
+# Check if user is authorized
+def is_authorized(update: Update) -> bool:
+    user_id = update.message.from_user.id
+    if user_id not in AUTHORIZED_USERS:
+        update.message.reply_text("You are not authorized to use this command. Please use /authorize.")
+        return False
+    return True
+
+# Set up the Telegram bot
+def main():
+    global accounts
+    accounts = load_accounts()  # Load existing accounts at startup
+
+    updater = Updater("YOUR_BOT_TOKEN")
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("authorize", authorize))
+    dp.add_handler(CommandHandler("list_accounts", list_accounts))
+    dp.add_handler(CommandHandler("add_account", add_account))
+    dp.add_handler(CommandHandler("remove_account", remove_account))
+    dp.add_handler(CommandHandler("forward", forward))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
