@@ -9,9 +9,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Replace with your own values
-API_ID = 'YOUR_API_ID'
-API_HASH = 'YOUR_API_HASH'
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
+API_ID = '23957241'
+API_HASH = 'c806d41322a1d13b32e910b39c138fc8'
+BOT_TOKEN = '8153725483:AAHZorPFnW4iUojWIFBPKDnNNagIz5mGAnU'
 
 # Initialize Telethon client
 client = TelegramClient('session_name', API_ID, API_HASH)
