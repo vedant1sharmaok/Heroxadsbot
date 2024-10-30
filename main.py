@@ -1,6 +1,6 @@
 import logging
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telethon import TelegramClient, errors
 from telethon.tl.types import PeerChannel
 
@@ -9,9 +9,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Replace with your own values
-API_ID = '23957241'
-API_HASH = 'c806d41322a1d13b32e910b39c138fc8'
-BOT_TOKEN = '8153725483:AAHZorPFnW4iUojWIFBPKDnNNagIz5mGAnU'
+API_ID = 'YOUR_API_ID'
+API_HASH = 'YOUR_API_HASH'
+BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
 # Initialize Telethon client
 client = TelegramClient('session_name', API_ID, API_HASH)
@@ -19,10 +19,10 @@ client = TelegramClient('session_name', API_ID, API_HASH)
 # Store channels for forwarding messages
 forwarding_channels = {}
 
-async def start(update: Update, context: CallbackContext) -> None:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('Hello! I am your forwarding bot. Use /add_channel <username> to add a channel.')
 
-async def add_channel(update: Update, context: CallbackContext) -> None:
+async def add_channel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if context.args:
         username = context.args[0].strip('@')
         try:
@@ -41,7 +41,7 @@ async def add_channel(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text('Please provide a channel username.')
 
-async def forward_messages(update: Update, context: CallbackContext) -> None:
+async def forward_messages(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not forwarding_channels:
         await update.message.reply_text('No channels have been added for forwarding messages.')
         return
@@ -61,16 +61,15 @@ async def forward_messages(update: Update, context: CallbackContext) -> None:
 
 async def main() -> None:
     # Start the bot
-    updater = Updater(BOT_TOKEN)
-    dispatcher = updater.dispatcher
-
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("add_channel", add_channel))
-    dispatcher.add_handler(CommandHandler("forward", forward_messages))
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("add_channel", add_channel))
+    application.add_handler(CommandHandler("forward", forward_messages))
 
     # Start polling
-    updater.start_polling()
-    await updater.idle()
+    await application.run_polling()
 
 if __name__ == '__main__':
     import asyncio
+    asyncio.run(main())
