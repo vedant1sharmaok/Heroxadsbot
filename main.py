@@ -1,5 +1,5 @@
 import os
-from .env import load_.env
+from env import load_env
 from telethon import TelegramClient, events
 import asyncio
 import logging
