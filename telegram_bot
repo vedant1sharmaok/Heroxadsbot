@@ -1,0 +1,5 @@
+telegram_bot/
+│
+├── bot.py                # Your main bot code
+├── requirements.txt      # Dependencies for your project
+└── .env                  # (Optional) Store sensitive information
