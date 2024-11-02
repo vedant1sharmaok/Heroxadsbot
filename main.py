@@ -1,22 +1,16 @@
-import os
-from env import load_env
 from telethon import TelegramClient, events
 import asyncio
 import logging
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Replace with your API credentials from environment variables
-API_ID = os.getenv('API_ID')
-API_HASH = os.getenv('API_HASH')
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-PHONE = os.getenv('PHONE')
-CHANNEL = os.getenv('CHANNEL')
+# Replace with your API credentials and bot token
+API_ID = 'YOUR_API_ID'  # Your API ID from my.telegram.org
+API_HASH = 'YOUR_API_HASH'  # Your API Hash from my.telegram.org
+BOT_TOKEN = 'YOUR_BOT_TOKEN'  # Your Bot Token from BotFather
+PHONE = 'YOUR_PHONE_NUMBER'  # Your phone number for user authentication
 
 # Create a client instance for the user account
 client = TelegramClient('user_session', API_ID, API_HASH)
@@ -36,11 +30,14 @@ async def main():
             groups.append(dialog)
             logger.info(f"Joined Group: {dialog.name} (ID: {dialog.id})")
 
+    # Specify the channel to forward messages from
+    channel = 'YOUR_CHANNEL_USERNAME'  # Replace with your channel username or ID
+
     while True:
         try:
             # Get the last message from the channel
-            async for message in client.iter_messages(CHANNEL, limit=1):
-                logger.info(f"New message from {CHANNEL}: {message.text}")
+            async for message in client.iter_messages(channel, limit=1):
+                logger.info(f"New message from {channel}: {message.text}")
 
                 # Forward the message to all groups
                 for group in groups:
@@ -50,6 +47,7 @@ async def main():
                     except Exception as e:
                         logger.error(f"Error forwarding to {group.name}: {e}")
 
+            # Wait for a custom interval before checking again (in seconds)
             await asyncio.sleep(60)  # Change this to your desired interval
 
         except Exception as e:
